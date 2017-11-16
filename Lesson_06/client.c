@@ -6,10 +6,12 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#define IP_ADR "localhost"
+#define IP_ADR "127.0.0.1"
 #define PORT 9999
 
 void error_handling(char *message);
+void writeMessage(int sock , char* message);
+int readMessage(int sock , char* message);
 
 int main(int argc, char* argv[])
 {
@@ -23,8 +25,8 @@ int main(int argc, char* argv[])
 
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family=AF_INET;
-    serv_addr.sin_addr.s_addr=inet_addr("192.168.72.128");
-    serv_addr.sin_port=htons(9999);
+    serv_addr.sin_addr.s_addr=inet_addr(IP_ADR);
+    serv_addr.sin_port=htons(PORT);
 
     if(connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))==-1)
         error_handling("connect() error!");
@@ -34,10 +36,46 @@ int main(int argc, char* argv[])
     {
         printf("Enter a message : ");
         fgets(message , sizeof(message) , stdin);
-        write(sock, message, strlen(message));
+
+        writeMessage(sock , message);
+        fputs("send msg] ", stdout);
+        fputs(message , stdout);
+
+        fputs("receive msg] ", stdout);
+        fputs(message , stdout);
+        if(readMessage(sock , message) == -1)
+            return 0;
+
+        puts("");
     }
     close(sock);
     return 0;
+}
+
+//
+void writeMessage(int sock , char* message)
+{
+    write(sock, message, strlen(message));
+}
+
+int readMessage(int sock , char* message)
+{
+    int read_len = 0;
+    int idx = 0;
+    while(read_len=read(sock, &message[idx], 1))
+    {
+        if(read_len==-1){
+            error_handling("read() error!");
+            return -1;
+        }
+
+        if(message[idx++] == '\n'){
+            message[idx] = 0;
+            return 0;
+        }
+    }
+
+    return -1;
 }
 
 void error_handling(char *message)

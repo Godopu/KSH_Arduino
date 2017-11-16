@@ -11,6 +11,8 @@
 #define MAXLEN 1024
 void error_handling(char *message);
 
+int readMessage(int sock , char* message);
+void writeMessage(int sock , char* message);
 int main(int argc, char *argv[])
 {
     int serv_sock;
@@ -47,30 +49,52 @@ int main(int argc, char *argv[])
             error_handling("accept() error");
         puts("Server] Accepted!!");
 
+        while(readMessage(clnt_sock , message)!= -1)
+        {
+            fputs("receive msg] ", stdout);
+            fputs(message , stdout);
+            fputs("send msg] ", stdout);
+            fputs(message , stdout);
+            writeMessage(clnt_sock , message);
+
+            puts("");
+        }
+
+
         message[0] = 0;
         idx = 0;
-        while(read_len=read(clnt_sock, &message[idx], 1))
-        {
-            if(read_len==-1){
-                error_handling("read() error!");
-                exit(1);
-            }
 
-            if(message[idx++] == '\n'){
-                message[idx] = 0;
 
-                //-----------------------write code to do---------------------------------
-                printf("Message from Client: %s", message);
-                //------------------------------------------------------------------------
-                message[0] = 0 ;
-                idx = 0;
-            }
+    }
+
+
+    close(serv_sock);
+    return 0;
+}
+
+int readMessage(int sock , char* message)
+{
+    int read_len = 0;
+    int idx = 0;
+    while(read_len=read(sock, &message[idx], 1))
+    {
+        if(read_len==-1){
+            error_handling("read() error!");
+            return -1;
+        }
+
+        if(message[idx++] == '\n'){
+            message[idx] = 0;
+            return 0;
         }
     }
 
-    close(clnt_sock);
-    close(serv_sock);
-    return 0;
+    return -1;
+}
+
+void writeMessage(int sock , char* message)
+{
+    write(sock, message, strlen(message));
 }
 
 void error_handling(char *message)
